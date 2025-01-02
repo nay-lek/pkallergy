@@ -1,0 +1,439 @@
+<?php
+include("conn/conn.php");
+
+function get_year_begin($data){
+		$y = (($data)-1);
+		$m = "10";
+		$d = "01";
+		$date_begin = $y."/".$m."/".$d;
+		return $date_begin;
+
+}
+
+function get_year_end($data){
+		$y = (($data));
+		$m = "09";
+		$d = "30";
+		$date_begin = $y."/".$m."/".$d;		
+		return $date_begin;
+
+}
+
+
+function get_anc($d1,$d2){
+		//$d1 = get_date_sql($d1);
+		//$d2 = get_date_sql($d2);
+		$sql = "select ifnull(count(*),0) as C_vn from person_anc_service where anc_service_date between '$d1' and '$d2' 
+		    and anc_service_type_id = 1";
+		$query = mysql_query($sql);
+		$num_row = mysql_num_rows($query);
+			while($result = mysql_fetch_array($query)){
+				$CC = $result['C_vn'];
+			}
+		return $CC;
+}
+
+
+function get_fp($d1,$d2){
+		//$d1 = get_date_sql($d1);
+		//$d2 = get_date_sql($d2);
+		$sql = "select count(*) as women_fp from person_women_service where women_service_id = 1 and  service_date between '$d1' and '$d2'";
+		$query = mysql_query($sql);
+		$num_row = mysql_num_rows($query);
+			while($result = mysql_fetch_array($query)){
+				$CC = $result['women_fp'];
+			}
+		return $CC;
+}
+
+
+
+
+function get_mch($d1,$d2){
+		//$d1 = get_date_sql($d1);
+		//$d2 = get_date_sql($d2);
+		$sql = "select ifnull(count(distinct(person_anc_id)),0) as C_pid,ifnull(count(*),0) as C_vn from person_anc_preg_care
+		        where care_date between '$d1' and '$d2'";
+		$query = mysql_query($sql);
+		$num_row = mysql_num_rows($query);
+			while($result = mysql_fetch_array($query)){
+				$C_pid = $result['C_pid'];
+				$C_vn  = $result['C_vn'];
+
+			}
+		return $C_pid . " : " .$C_vn   ;
+}
+
+
+
+
+
+function get_pp($d1,$d2){
+		//$d1 = get_date_sql($d1);
+		//$d2 = get_date_sql($d2);
+		$sql = "select ifnull(count(distinct(person_wbc_id)),0) as C_pid , ifnull(count(*),0) as C_vn from person_wbc_post_care
+		        where care_date between '$d1' and '$d2'";
+		$query = mysql_query($sql);
+		$num_row = mysql_num_rows($query);
+			while($result = mysql_fetch_array($query)){
+				$C_pid = $result['C_pid'];
+				$C_vn  = $result['C_vn'];
+
+			}
+		return $C_pid . " : " .$C_vn   ;
+}
+
+
+
+function get_vaccine($d1,$d2){
+		//$d1 = get_date_sql($d1);
+		//$d2 = get_date_sql($d2);
+		$sql_wbc = "select ifnull(count(*),0) as C_wbc from person_wbc_vaccine_detail wbc_vac
+		left join person_wbc_service wbc_service on wbc_vac.person_wbc_service_id = wbc_service.person_wbc_service_id
+		where wbc_service.service_date between '$d1' and '$d2' " ;
+		$query_wbc = mysql_query($sql_wbc);
+		$num_row = mysql_num_rows($query_wbc);
+			while($result_wbc = mysql_fetch_array($query_wbc)){
+				$CC_wbc = $result_wbc['C_wbc'];
+			}
+
+		$sql_epi =  "select ifnull(count(*),0) as C_epi from person_epi_vaccine_list epi_vac
+		left join person_epi_vaccine epi_service on epi_vac.person_epi_vaccine_id = epi_service.person_epi_vaccine_id
+		where epi_service.vaccine_date between '$d1' and '$d2'  " ;
+		$query_epi = mysql_query($sql_epi);
+		$num_row = mysql_num_rows($query_epi);
+			while($result_epi = mysql_fetch_array($query_epi)){
+				$CC_epi = $result_epi['C_epi'];
+			}
+
+
+		return  ($CC_wbc) + ($CC_epi) ; 
+		//return  $sql_wbc . " union ". $sql_epi ; 
+
+}
+
+
+
+function get_nutrition($d1,$d2){
+		//$d1 = get_date_sql($d1);
+		//$d2 = get_date_sql($d2);
+		$sql_wbc = "select ifnull(count(distinct(person_wbc_id)),0) as C_hn_wbc, ifnull(count(person_wbc_id),0) as C_nutri from person_wbc_nutrition
+					where nutrition_date  between '$d1' and '$d2'" ;
+		$query_wbc = mysql_query($sql_wbc);
+		$num_row = mysql_num_rows($query_wbc);
+			while($result_wbc = mysql_fetch_array($query_wbc)){
+				$CC_wbc = $result_wbc['C_nutri'];
+				$CC_wnc_hn = $result_wbc['C_hn_wbc'];
+			}
+
+		$sql_epi =  "select ifnull(count(distinct(person_epi_id)),0) as C_hn_epi,ifnull(count(person_epi_id),0) as C_nutri from person_epi_nutrition
+					where nutrition_date  between '$d1' and '$d2'" ;
+		$query_epi = mysql_query($sql_epi);
+		$num_row = mysql_num_rows($query_epi);
+			while($result_epi = mysql_fetch_array($query_epi)){
+				$CC_epi = $result_epi['C_nutri'];
+				$CC_epi_hn = $result_epi['C_hn_epi'];
+			}
+
+
+		return     ($CC_wnc_hn+$CC_epi_hn)." : ". ($CC_wbc+$CC_epi); 
+		//return  $sql_epi ;
+
+}
+
+
+
+
+function get_development($d1,$d2){
+		//$d1 = get_date_sql($d1);
+		//$d2 = get_date_sql($d2);
+		$sql_wbc = "select ifnull(count(*),0) as C_develop  from person_wbc_service  
+					where wbc_development_assess_id is not null and service_date between '$d1' and '$d2' " ;
+		$query_wbc = mysql_query($sql_wbc);
+		$num_row = mysql_num_rows($query_wbc);
+			while($result_wbc = mysql_fetch_array($query_wbc)){
+				$C_wbc = $result_wbc['C_develop'];
+			}
+
+		$sql_epi =  "select ifnull(count(*),0) as C_develop from person_epi_vaccine  
+					where wbc_development_assess_id is not null and vaccine_date  between '$d1' and '$d2'" ;
+		$query_epi = mysql_query($sql_epi);
+		$num_row = mysql_num_rows($query_epi);
+			while($result_epi = mysql_fetch_array($query_epi)){
+				$C_epi = $result_epi['C_develop'];
+			}
+
+
+		return  (($C_wbc) + ($C_epi)) ; 
+		//return  $sql_wbc ;
+
+}
+
+
+function get_survey($d1,$d2){
+
+		$sql_house = "select ifnull(count((house_id)),0) as C_house from house_survey
+		where survey_date between '$d1' and '$d2'  " ;
+		$query_house = mysql_query($sql_house);
+		$num_row = mysql_num_rows($query_house);
+			while($result_house = mysql_fetch_array($query_house)){
+				$CC_house = $result_house['C_house'];
+			}
+
+		$sql_person_vist =  "select ifnull(count((person_id)),0) as C_pid from person_visit
+		where visit_date between '$d1' and '$d2'    " ;
+		$query_person_vist = mysql_query($sql_person_vist);
+		$num_row = mysql_num_rows($query_person_vist);
+			while($result_person_vist = mysql_fetch_array($query_person_vist)){
+				$CC_person_vist = $result_person_vist['C_pid'];
+			}
+
+
+		return  $CC_house ." : ". $CC_person_vist ; 
+
+}
+
+
+
+
+function get_date_sql($date_th_format){
+		
+		$date_insert  =  substr($date_th_format,6,4)-543;
+		$date_insert  =  $date_insert."/".substr($date_th_format,3,2);
+		$date_insert  =  $date_insert."/".(substr($date_th_format,0,2));
+		return $date_insert;
+}
+
+function get_date_show($date_f){		
+		$date_show  =  substr($date_f,8,2);
+		$date_show  =  $date_show."-".substr($date_f,5,2);
+		$date_show  =  $date_show."-".(substr($date_f,0,4)+543);
+		return $date_show;
+}
+
+
+function  get_date_end($m){			
+			switch($m) {
+					case 1  : $d = "31" ;
+					 case 2  : $d = "28" ;
+					  case 3  : $d = "31" ;
+					   case 4  : $d = "30" ;
+					    case 5  : $d = "31" ;
+					     case 6  : $d = "30" ;
+					      case 7  : $d = "31" ;
+					 	   case 8  : $d = "31" ;
+						    case 9  : $d = "30" ;
+							 case 10  : $d = "31" ;
+							  case 11  : $d = "30" ;
+							   case 12  : $d = "31" ;
+			}	
+			
+			return $d;
+}
+
+
+
+
+function get_village_allergy_table($pcu_code){
+	   if($pcu_code =='11039'){
+		$sql = "select vill.village_moo as Moo, concat(pt.chwpart , pt.amppart, pt.tmbpart) as id_,concat('ม.',vill.village_moo ,' บ.',vill.village_name) as Village_name ,count(distinct(opd.hn)) as C_Hn
+				from opd_allergy opd
+				left join patient pt on opd.hn  = pt.hn
+				left join person ps on pt.cid = ps.cid
+				left join village vill on ps.village_id = vill.village_id
+				where concat(pt.chwpart , pt.amppart, pt.tmbpart )  = '421203'
+				group by vill.village_name
+				order by vill.village_id ";
+	   }
+  // echo $sql;
+
+		$query = mysql_query($sql);
+	//	$num_row = mysql_num_rows($query);
+		$tb  = "<table class='table table-bordered table-hover table-striped'>
+                                <thead>
+                                    <tr>
+                                        <th>ชื่อหมู่บ้าน</th>
+                                        <th>จำนวน </th>                                        
+                                    </tr>
+                                </thead>
+                                <tbody> ";
+
+			$sum_C_Hn = 0;
+
+			while($result = mysql_fetch_array($query)){
+					
+					$Village  = $result['Village_name'];
+					$C_Hn = $result['C_Hn'];
+					$id_ = $result['id_'];
+					$Moo  = $result['Moo'];
+					$sum_C_Hn  = $sum_C_Hn + $C_Hn ;
+					$tb = $tb."	<tr>
+									<td>$Village</td>
+									<td><a target='_blank' href='showdetail.php?id=$id_&moo=$Moo&vil_name=$Village&cHn=$C_Hn'>$C_Hn</a></td>
+								</tr> ";
+			}
+
+					   $tb = $tb."  
+								<tr>
+									<th>รวม</td>
+									<th>$sum_C_Hn</td>
+                                 </tr>
+								</tbody>
+                            </table> ";
+					return $tb;
+					
+					
+
+	}//-------get_village_alleey_table --------------------
+
+
+
+
+
+
+	function get_drugallergy_detail($id_,$moo_id){
+		$sql = "select opd.hn,concat(pt.pname,' ' ,pt.fname,' ' ,pt.lname) as pt_name  ,count(opd.hn) as C_C ,group_concat(opd.agent) as C_drug
+				from opd_allergy opd
+				left join patient pt on opd.hn  = pt.hn
+				left join person ps on pt.cid = ps.cid
+				left join village vill on ps.village_id = vill.village_id
+				where concat(pt.chwpart , pt.amppart, pt.tmbpart )  = '$id_'  and vill.village_moo in($moo_id)
+				group by opd.hn ";
+		//echo $sql;
+		$query = mysql_query($sql);
+		$num_row = mysql_num_rows($query);
+		$tb  = "<table class='table table-bordered table-hover table-striped'>
+                                <thead>
+                                    <tr>
+                                        <th>ลำดับ</th>
+                                        <th>ชื่อ - สกุล </th>
+                                        <th>จำนวนยาที่แพ้</th>
+										<th>ชื่อยาที่แพ้</th>
+                                    </tr>
+                                </thead>
+                                <tbody> ";
+
+			$items = 1;
+
+			while($result = mysql_fetch_array($query)){
+					
+					//$C_vn  = $result['C_vn'];
+					$pt_name =$result['pt_name'];
+					$C_C =  wordwrap($result['C_C'],5, "\n", true);
+					$C_drug  = wordwrap($result['C_drug'],30, "\n", true);
+				    $hn  = $result['hn'];
+					//$sum_C_vn  = $sum_C_vn + $C_vn ;
+					$tb = $tb."	<tr>
+									<td>$items</td>
+									<td><a target='_blank' href='showdetail_list.php?hn=$hn&pt_name=$pt_name'> $pt_name</a></td>
+									<td>$C_C</td> 
+									<td>$C_drug</td>
+                                 </tr> ";
+					$items = $items+1;
+			}
+
+					   $tb = $tb."  
+								</tbody>
+                            </table> ";
+					return $tb;
+
+				
+
+	}//-------get_drugalleey_detail --------------------
+
+
+
+	function get_drugallergy_detail_list($HN){
+		$sql = "select opd.hn,concat(pt.pname,' ' ,pt.fname,' ' ,pt.lname) as pt_name   ,opd.agent  ,opd.symptom,opd.begin_date
+				from opd_allergy opd
+				left join patient pt on opd.hn  = pt.hn
+				left join person ps on pt.cid = ps.cid
+				left join village vill on ps.village_id = vill.village_id
+				where opd.hn = '$HN' ";
+		//echo $sql;
+		$query = mysql_query($sql);
+		$num_row = mysql_num_rows($query);
+		$tb  = "<table class='table table-bordered table-hover table-striped'>
+                                <thead>
+                                    <tr>
+                                        <th>ลำดับ</th>
+                                        <th>ชื่อยาที่แพ้</th>
+										<th>อาการที่แพ้</th>
+										<th>วันที่แจ้ง</th>
+                                    </tr>
+                                </thead>
+                                <tbody> ";
+
+			$items = 1;
+
+			while($result = mysql_fetch_array($query)){
+					
+					//$C_vn  = $result['C_vn'];
+					$begin_date = get_date_show($result['begin_date']);
+					$agent = $result['agent'];
+					$symptom  = $result['symptom'];
+				    $hn  = $result['hn'];
+					//$sum_C_vn  = $sum_C_vn + $C_vn ;
+					$tb = $tb."	<tr>
+									<td>$items</td>
+									<td>$agent</td> 
+									<td>$symptom</td>
+									<td>$begin_date</td>
+                                 </tr> ";
+					$items = $items+1;
+			}
+
+					   $tb = $tb."  
+								</tbody>
+                            </table> ";
+					return $tb;
+
+				
+
+	}//-------get_drugalleey_detail --------------------
+
+
+
+		function get_pt_drugallergy($sql){
+		//echo $sql;
+		$query = mysql_query($sql);
+		$num_row = mysql_num_rows($query);
+		$tb  = "<table class='table table-hover table-condensed table-bordered '>
+                                <thead>
+                                    <tr class='info'>
+                                        <th>ลำดับ</th>
+                                        <th>ชื่อ-สกุล</th>
+										<th>อายุ</th>
+										
+                                    </tr>
+                                </thead>
+                                <tbody> ";
+
+			$items = 1;
+
+			while($result = mysql_fetch_array($query)){
+
+					//$C_vn  = $result['C_vn'];
+					$pt_name = $result['pt_name'];
+					$age_y = $result['age_y'];
+					$C_C  = $result['C_C'];
+				    $hn  = $result['hn'];
+					//$sum_C_vn  = $sum_C_vn + $C_vn ;
+					$tb = $tb."	<tr class='warning'>
+									<td>$items</td>
+									<td><a target='_blank' href='showdetail_list.php?hn=$hn&pt_name=$pt_name'>$pt_name</a></td> 
+									<td>$age_y</td>
+									<td>$C_C</td>
+                                 </tr> ";
+					$items = $items+1;
+			}
+
+					   $tb = $tb."  
+								</tbody>
+                            </table> ";
+					return $tb;
+
+				
+
+	}//-------get_drugalleey_detail --------------------
+?>
