@@ -73,9 +73,9 @@ function chkopd_allergy(){
 							//$get_row_pcu = count_pcuchild();
 							//echo check_patient_hospcu($patient_cid,$hospcode);
 
-							      if(check_patient_hospcu($patient_cid,$hospcode) > 0) {
-									  
-									  	set_db_for_patient($trigges_event,$patient_cid,$agent,$hn,$hospcode);
+							      if(set_hospcu($trigges_event,$sql,$ccid,$agent ,$hospcode,"check_patient_hospcu" )	 > 0) {		
+															  
+									  	
 									    $msg_send_line_n =  $msg_send_line_n."|[".$hospcode."]";
 										$hospcode  =  $hospcode.$hospcode;
 
@@ -84,10 +84,7 @@ function chkopd_allergy(){
 									  	// echo "ไม่มี Patient : $patient_cid, นี้ในระบบ $hospcode <br>";
 									   	$msg_send_line_n =   $msg_send_line_n;
 										$hospcode = '';
-									  
-
-
-								  }
+								}
 
 								
 							//  echo "---==>>>>>>". $trigges_event.':'.$patient_cid.':'.$agent.':'.$hn.':'.$hospcode ;
@@ -139,9 +136,8 @@ function set_db_for_patient($trigges_event,$patient_cid,$agent,$hn, $hospcode){
 		  	 $hn = $result['hn'];
 			 $agent = var_export( $result['agent'], true);
 		   	 $patient_cid = var_export($result['patient_cid'], true);		   	       
-			 $pt_name = 	 $result['pt_name'];
-			 $opd_allergy_alert_type_id = 1;
-			 
+			 $pt_name =  $result['pt_name'];
+			 $opd_allergy_alert_type_id = 1;			 
 			 $sql_to_set_db_pcu = " delete opd_allergy  where patient_cid = $patient_cid and agent= $agent";
 
 		   }
@@ -150,7 +146,7 @@ function set_db_for_patient($trigges_event,$patient_cid,$agent,$hn, $hospcode){
 
 		//#########################################################################################
 	   //#########################  รันฟังชัน ######################################################
-	        set_hospcu($trigges_event,$sql_to_set_db_pcu,$patient_cid,$agent,$hospcode);
+	        set_hospcu($trigges_event,$sql_to_set_db_pcu,$patient_cid,$agent,$hospcode,"");
 			/*set_pcu_04770($trigges_event,$sql_to_set_db_pcu,$patient_cid,$agent);
 			set_pcu_04771($trigges_event,$sql_to_set_db_pcu,$patient_cid,$agent);
 			set_pcu_04772($trigges_event,$sql_to_set_db_pcu,$patient_cid,$agent);
@@ -283,7 +279,7 @@ function set_db_for_patient($trigges_event,$patient_cid,$agent,$hn, $hospcode){
        //#########################################################################################
 	   //#########################  รันฟังชัน ######################################################
 	 //  echo $sql_to_set_db_pcu ." for ".$hospcode ;
-	        set_hospcu($trigges_event,$sql_to_set_db_pcu,$patient_cid,$agent,$hospcode);
+	        set_hospcu($trigges_event,$sql_to_set_db_pcu,$patient_cid,$agent,$hospcode,"");
 			/*set_pcu_04770($trigges_event,$sql_to_set_db_pcu,$patient_cid,$agent);
 			set_pcu_04771($trigges_event,$sql_to_set_db_pcu,$patient_cid,$agent);
 			set_pcu_04772($trigges_event,$sql_to_set_db_pcu,$patient_cid,$agent);
@@ -307,8 +303,6 @@ function set_db_for_patient($trigges_event,$patient_cid,$agent,$hn, $hospcode){
 	return $msg_send_line ;
     
 }
-
-
 
 
 
@@ -367,7 +361,7 @@ function sendLineNotif_opd_allergy($message)
 
 
 //--------------------ฟังชั่นบน hosxp_pcu--------------------------------
-function set_hospcu($trigges_event,$sql,$ccid,$agent ,$hospcode){
+function set_hospcu($trigges_event,$sql,$ccid,$agent ,$hospcode,$optionselect ){
     include("conn/conn.php"); 
 	$ini = parse_ini_file('conn/app.ini');
 	$sql_check_pid = "select cid from patient where cid = $ccid";	
@@ -410,9 +404,21 @@ function set_hospcu($trigges_event,$sql,$ccid,$agent ,$hospcode){
 		      echo "Failed to connect to MySQL: " . $mysqli -> connect_error;
 		exit();
 		}
-		// Perform query
 
 
+    // Check Option For Get data 
+
+			if($optionselect=="check_patient_hospcu"){ 
+						// Perform query
+					// echo $sql_check_pid;
+					$result = mysqli_query($mysqli,$sql_check_pid);	
+					$rowcount=mysqli_num_rows($result);
+					return $rowcount;
+
+			}else{
+
+				
+		
 
 			switch ($trigges_event) {
 				case 'inserted':					   
@@ -458,65 +464,14 @@ function set_hospcu($trigges_event,$sql,$ccid,$agent ,$hospcode){
 			echo "จัดการ Patient : $ccid นี้ในระบบ $hospcode เรียบร้อยแล้ว<br>";
 			
 
+		}
+
 
 	$mysqli -> close();
 }
 
 
 
-
-
-//--------------------ฟังชั่นบน hosxp_pcu--------------------------------
-function check_patient_hospcu($ccid,$hospcode){
-    //include("conn/conn.php"); 
-	$ini = parse_ini_file('conn/app.ini');
-	$sql_check_pid = "select cid from patient where cid = '$ccid'";	
-    
-	switch ($hospcode) {
-		case '04770':
-			$mysqli = new mysqli($ini['db_host_04770'],$ini['db_user_04770'],$ini['db_password_04770'],$ini['db_name_04770']);
-			$mysqli -> set_charset("utf8");
-
-		case '04771':
-			$mysqli = new mysqli($ini['db_host_04771'],$ini['db_user_04771'],$ini['db_password_04771'],$ini['db_name_04771']);
-			$mysqli -> set_charset("utf8");
-
-		case '04772':
-			$mysqli = new mysqli($ini['db_host_04772'],$ini['db_user_04772'],$ini['db_password_04772'],$ini['db_name_04772']);
-			$mysqli -> set_charset("utf8");
-
-		case '04773':
-			$mysqli = new mysqli($ini['db_host_04773'],$ini['db_user_04773'],$ini['db_password_04773'],$ini['db_name_04773']);
-			$mysqli -> set_charset("utf8");
-			
-		case '04774':
-			$mysqli = new mysqli($ini['db_host_04774'],$ini['db_user_04774'],$ini['db_password_04774'],$ini['db_name_04774']);
-			$mysqli -> set_charset("utf8");
-
-		case '04775':
-			$mysqli = new mysqli($ini['db_host_04775'],$ini['db_user_04775'],$ini['db_password_04775'],$ini['db_name_04775']);
-			$mysqli -> set_charset("utf8");
-
-		default:
-			# code...
-			break;
-
-	}
-        
-	
-	// Check connection
-		if ($mysqli -> connect_errno) {
-		      echo "Failed to connect to MySQL: " . $mysqli -> connect_error;
-		exit();
-		}
-		// Perform query
-      // echo $sql_check_pid;
-		$result = mysqli_query($mysqli,$sql_check_pid);	
-		$rowcount=mysqli_num_rows($result);
-		return $rowcount;
-
-	    $mysqli -> close();
-}
 
 
 ?>
